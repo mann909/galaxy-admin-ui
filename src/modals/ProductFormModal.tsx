@@ -22,7 +22,13 @@ import {
   CardContent,
 } from "@mui/material";
 import { X, ChevronDown, Plus, Trash2, Upload } from "lucide-react";
-import { Product, CreateProductRequest, ProductVariant, ComboOffer, ComboOfferIncludedSize } from "../pages/products/interface";
+import {
+  Product,
+  CreateProductRequest,
+  ProductVariant,
+  ComboOffer,
+  ComboOfferIncludedSize,
+} from "../pages/products/interface";
 import { Category } from "../pages/categories/interface";
 import { useUploadFilesApi } from "../api/api-hooks/useUploadApi";
 import toast from "react-hot-toast";
@@ -110,7 +116,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         description: "",
         brand: "",
         category: "",
-        productType: "bag",
+        productType: "",
         features: "",
         materials: "",
         typeSpecific: {
@@ -192,11 +198,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name) newErrors.name = "Product name is required";
-    if (!formData.slug) newErrors.slug = "Slug is required";
+    // if (!formData.slug) newErrors.slug = "Slug is required";
     if (!formData.description) newErrors.description = "Description is required";
     if (!formData.brand) newErrors.brand = "Brand is required";
     if (!formData.category) newErrors.category = "Category is required";
-    if (!formData.productType) newErrors.productType = "Product type is required";
+    // if (!formData.productType) newErrors.productType = "Product type is required";
     if (!formData.variants || formData.variants.length === 0) {
       newErrors.variants = "At least one variant is required";
     } else if (
@@ -216,22 +222,82 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     ) {
       newErrors.variants = "All variants must have all the required fields";
     }
-    if (
-      formData.comboOffers &&
-      formData.comboOffers.length > 0 &&
-      formData.comboOffers.some(
-        (offer: ComboOffer) =>
-          !offer?.name ||
-          !offer?.description ||
-          !offer?.comboPrice ||
-          !offer.savings ||
-          !offer.savingsPercentage ||
-          (offer.includedSizes &&
-            offer.includedSizes.length > 0 &&
-              offer.includedSizes.some((size: ComboOfferIncludedSize) => !size.quantity || !size.sizeCode))
-      )
-    ) {
-      newErrors.comboOffers = "All the combo offers must have all the required fields";
+    // Combo Offers Validation
+    if (formData.comboOffers && formData.comboOffers.length > 0) {
+      const variants = formData.variants || [];
+      
+      for (let i = 0; i < formData.comboOffers.length; i++) {
+        const offer: ComboOffer = formData.comboOffers[i];
+        
+        // Basic field validation
+        if (!offer?.name || !offer?.description || !offer?.comboPrice || !offer.savings || !offer.savingsPercentage) {
+          newErrors.comboOffers = "All combo offers must have all required fields";
+          break;
+        }
+        
+        if (!offer.includedSizes || offer.includedSizes.length === 0) {
+          newErrors.comboOffers = "Each combo offer must include at least one size";
+          break;
+        }
+        
+        // Validate each included size
+        for (const comboSize of offer.includedSizes) {
+          if (!comboSize.quantity || !comboSize.sizeCode) {
+            newErrors.comboOffers = "All included sizes must have quantity and size code";
+            break;
+          }
+          
+          // Check if size exists in variants
+          const variantsWithThisSize = variants.filter((variant: ProductVariant) => 
+            variant.size?.code === comboSize.sizeCode
+          );
+          
+          if (variantsWithThisSize.length === 0) {
+            newErrors.comboOffers = `Size ${comboSize.sizeCode} in combo "${offer.name}" does not exist in product variants`;
+            break;
+          }
+          
+          // Check stock availability for this size
+          const totalAvailableStock = variantsWithThisSize.reduce((sum: number, variant: ProductVariant) => 
+            sum + (variant.inventory?.stock || 0), 0
+          );
+          
+          if (totalAvailableStock < comboSize.quantity) {
+            newErrors.comboOffers = `Insufficient stock for size ${comboSize.sizeCode} in combo "${offer.name}". Required: ${comboSize.quantity}, Available: ${totalAvailableStock}`;
+            break;
+          }
+        }
+        
+        // Validate common colors between sizes in combo
+        if (offer.includedSizes.length > 1) {
+          const sizeCodes = offer.includedSizes.map(size => size.sizeCode);
+          const colorsBySize: { [sizeCode: string]: string[] } = {};
+          
+          // Group colors by size
+          sizeCodes.forEach(sizeCode => {
+            const variantsForSize = variants.filter((variant: ProductVariant) => 
+              variant.size?.code === sizeCode
+            );
+            colorsBySize[sizeCode] = variantsForSize.map((variant: ProductVariant) => 
+              variant.color?.code || variant.color?.name || ''
+            ).filter((color: string) => color);
+          });
+          
+          // Find common colors across all sizes in the combo
+          const firstSizeColors = colorsBySize[sizeCodes[0]] || [];
+          const commonColors = firstSizeColors.filter(color => 
+            sizeCodes.every(sizeCode => colorsBySize[sizeCode]?.includes(color))
+          );
+          
+          if (commonColors.length === 0) {
+            const sizeNames = sizeCodes.join(' + ');
+            newErrors.comboOffers = `Combo "${offer.name}" with sizes ${sizeNames} has no common colors. All sizes in a combo must share at least one common color.`;
+            break;
+          }
+        }
+        
+        if (newErrors.comboOffers) break;
+      }
     }
 
     const errMsg = Object.values(newErrors).join(", ");
@@ -240,6 +306,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const getCategorySlug = (catId: string) => {
+    const category = categories.find((cat) => cat._id === catId);
+    return category ? category.slug.toLowerCase() || category.name.toLowerCase() :  "";
   };
 
   const handleSubmit = async () => {
@@ -284,7 +355,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         description: formData.description,
         brand: formData.brand,
         category: formData.category,
-        productType: formData.productType,
+        productType: getCategorySlug(formData.category),
         features: formData.features
           ? formData.features
               .split(",")
@@ -475,7 +546,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       description: "",
       brand: "",
       category: "",
-      productType: "bag",
+      productType: "",
       features: "",
       materials: "",
       typeSpecific: {
@@ -657,7 +728,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 disabled={isLoading}
               />
 
-              <TextField
+              {/* <TextField
                 fullWidth
                 label="Slug"
                 value={formData.slug || ""}
@@ -666,7 +737,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 helperText={errors.slug}
                 required
                 disabled={isLoading}
-              />
+              /> */}
 
               <TextField
                 fullWidth
@@ -696,7 +767,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth error={!!errors.productType}>
+              {/* <FormControl fullWidth error={!!errors.productType}>
                 <InputLabel>Product Type</InputLabel>
                 <Select
                   value={formData.productType || "bag"}
@@ -709,7 +780,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   <MenuItem value="backpack">Backpack</MenuItem>
                   <MenuItem value="luggage">Luggage</MenuItem>
                 </Select>
-              </FormControl>
+              </FormControl> */}
 
               <FormControl fullWidth error={!!errors.status}>
                 <InputLabel>Status</InputLabel>
@@ -1098,7 +1169,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                   {/* Images Section */}
                   <Typography variant="body2" gutterBottom sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
-                    Product Images
+                    Product Images (Atleast one image is required)
                   </Typography>
                   <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
                     <Button
@@ -1455,7 +1526,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         size="small"
                         sx={{ flex: 1 }}
                       />
-                      <TextField
+                      {/* <TextField
                         label="Quantity"
                         type="number"
                         value={size.quantity || 1}
@@ -1466,7 +1537,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         disabled={isLoading}
                         size="small"
                         sx={{ width: 100 }}
-                      />
+                      /> */}
                       <IconButton
                         size="small"
                         onClick={() => removeIncludedSize(index, sizeIndex)}

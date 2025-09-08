@@ -143,7 +143,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name) newErrors.name = "Category name is required";
-    if (!formData.slug) newErrors.slug = "Slug is required";
+    // if (!formData.slug) newErrors.slug = "Slug is required";
 
     const errMsg = Object.values(newErrors).join(", ");
     if (errMsg) {
@@ -295,7 +295,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
                 disabled={isLoading}
               />
 
-              <TextField
+              {/* <TextField
                 fullWidth
                 label="Slug"
                 value={formData.slug || ""}
@@ -304,7 +304,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
                 helperText={errors.slug}
                 required
                 disabled={isLoading}
-              />
+              /> */}
 
               <FormControl fullWidth>
                 <InputLabel>Parent Category</InputLabel>

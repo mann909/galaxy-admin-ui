@@ -136,7 +136,8 @@ export interface CreateProductRequest {
   description: string;
   brand: string;
   category: string;
-  productType: 'bag' | 'backpack' | 'luggage';
+  // productType: 'bag' | 'backpack' | 'luggage';
+  productType: string;
   features?: string[];
   materials?: string[];
   typeSpecific?: ProductTypeSpecific;
