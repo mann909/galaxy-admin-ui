@@ -31,7 +31,7 @@ const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
-  { text: 'Users', icon: <Users size={20} />, path: '/users' },
+  // { text: 'Users', icon: <Users size={20} />, path: '/users' },
   { text: 'Products', icon: <Package size={20} />, path: '/products' },
   { text: 'Categories', icon: <FolderTree size={20} />, path: '/categories' },
   { text: 'Banners', icon: <Image size={20} />, path: '/banners' },
