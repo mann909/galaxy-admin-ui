@@ -54,12 +54,12 @@ export const useLogoutApi = () => {
 };
 
 // Change password
-export const useChangePasswordApi = () => {
-  return useMutation({
-    mutationFn: (data: {
-      oldPassword: string;
-      newPassword: string;
-      confirmPassword: string;
-    }) => authApi.changePassword(data),
-  });
-};
+// export const useChangePasswordApi = () => {
+//   return useMutation({
+//     mutationFn: (data: {
+//       oldPassword: string;
+//       newPassword: string;
+//       confirmPassword: string;
+//     }) => authApi.changePassword(data),
+//   });
+// };

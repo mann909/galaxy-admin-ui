@@ -25,10 +25,10 @@ export const logout = ()=>{
 }
 
 // Change password
-export const changePassword = (data: {oldPassword:string, newPassword:string, confirmPassword:string})=>{
-    return ApiService({
-        method: 'POST',
-        endpoint:apiPaths.auth.changePassword,
-        data
-    })
-}
+// export const changePassword = (data: {oldPassword:string, newPassword:string, confirmPassword:string})=>{
+//     return ApiService({
+//         method: 'POST',
+//         endpoint:apiPaths.auth.changePassword,
+//         data
+//     })
+// }
