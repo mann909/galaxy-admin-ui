@@ -24,88 +24,7 @@ const Orders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { currentParams, handleParamsChange } = useGridSettings('orders', 10);
 
-  // API hooks
-  const apiParams = {
-    page: currentParams.page + 1,
-    limit: currentParams.pageSize,
-    filters: currentParams.filterModel.items.reduce((acc: any, item) => {
-      acc[item.field] = item.value;
-      return acc;
-    }, {}),
-    sortBy: currentParams.sortModel[0]?.field,
-    sortOrder:
-      currentParams.sortModel[0]?.sort === "asc"
-        ? ("asc" as const)
-        : currentParams.sortModel[0]?.sort === "desc"
-        ? ("desc" as const)
-        : undefined,
-  };
-
-  const { data: ordersData, isLoading } = useOrdersApi(apiParams);
-  const {
-    mutate: updateOrderStatus,
-    isSuccess: updateOrderStatusSuccess,
-    isError: updateOrderStatusError,
-    isPending: updateOrderStatusPending,
-  } = useUpdateOrderStatusApi();
-  const {
-    mutate: refundOrder,
-    isSuccess: refundOrderSuccess,
-    isError: refundOrderError,
-    isPending: refundOrderPending,
-  } = useRefundOrderApi();
-
-  // Update grid data when API data changes
-  useEffect(() => {
-    if (ordersData) {
-      console.log("Orders Data:", ordersData?.docs);
-      setGridData({
-        rows: ordersData?.docs || [],
-        totalCount: ordersData.totalCount || 0,
-      });
-    }
-  }, [ordersData]);
-
-  useEffect(() => {
-    if (updateOrderStatusSuccess) {
-      toast.success("Order status updated successfully");
-      setStatusModalOpen(false);
-    }
-    if (updateOrderStatusError) {
-      toast.error("Failed to update order status");
-    }
-  }, [updateOrderStatusSuccess, updateOrderStatusError]);
-
-  useEffect(() => {
-    if (refundOrderSuccess) {
-      toast.success("Order refunded successfully");
-    }
-    if (refundOrderError) {
-      toast.error("Failed to refund order");
-    }
-  }, [refundOrderSuccess, refundOrderError]);
-
-  const getOrderStatusLabel = (status: number) => {
-    switch (status) {
-      case -1: return "Cancelled";
-      case 0: return "Not Confirmed";
-      case 1: return "Confirmed";
-      case 2: return "Shipped";
-      case 3: return "Delivered";
-      default: return "Unknown";
-    }
-  };
-
-  const getPaymentStatusLabel = (status: number) => {
-    switch (status) {
-      case -1: return "Refunded";
-      case 1: return "Pending";
-      case 2: return "Confirmed";
-      default: return "Unknown";
-    }
-  };
-
-  const columns: DynamicColumn[] = [
+    const columns: DynamicColumn[] = [
     {
       field: "_id",
       headerName: "Order ID",
@@ -258,6 +177,91 @@ const Orders: React.FC = () => {
       ),
     },
   ];
+
+  // API hooks
+  const apiParams = {
+    page: currentParams.page + 1,
+    limit: currentParams.pageSize,
+    filters: currentParams.filterModel.items.map((item) => {
+      return {
+        field: item.field,
+        operator: item.operator,
+        type: columns.filter((i) => i.field === item.field)[0]?.type,
+        value: item.value,
+      };
+    }),
+    sortBy: currentParams.sortModel[0]?.field,
+    sortOrder:
+      currentParams.sortModel[0]?.sort === "asc"
+        ? ("asc" as const)
+        : currentParams.sortModel[0]?.sort === "desc"
+        ? ("desc" as const)
+        : undefined,
+  };
+
+  const { data: ordersData, isLoading } = useOrdersApi(apiParams);
+  const {
+    mutate: updateOrderStatus,
+    isSuccess: updateOrderStatusSuccess,
+    isError: updateOrderStatusError,
+    isPending: updateOrderStatusPending,
+  } = useUpdateOrderStatusApi();
+  const {
+    mutate: refundOrder,
+    isSuccess: refundOrderSuccess,
+    isError: refundOrderError,
+    isPending: refundOrderPending,
+  } = useRefundOrderApi();
+
+  // Update grid data when API data changes
+  useEffect(() => {
+    if (ordersData) {
+      console.log("Orders Data:", ordersData?.docs);
+      setGridData({
+        rows: ordersData?.docs || [],
+        totalCount: ordersData.totalCount || 0,
+      });
+    }
+  }, [ordersData]);
+
+  useEffect(() => {
+    if (updateOrderStatusSuccess) {
+      toast.success("Order status updated successfully");
+      setStatusModalOpen(false);
+    }
+    if (updateOrderStatusError) {
+      toast.error("Failed to update order status");
+    }
+  }, [updateOrderStatusSuccess, updateOrderStatusError]);
+
+  useEffect(() => {
+    if (refundOrderSuccess) {
+      toast.success("Order refunded successfully");
+    }
+    if (refundOrderError) {
+      toast.error("Failed to refund order");
+    }
+  }, [refundOrderSuccess, refundOrderError]);
+
+  const getOrderStatusLabel = (status: number) => {
+    switch (status) {
+      case -1: return "Cancelled";
+      case 0: return "Not Confirmed";
+      case 1: return "Confirmed";
+      case 2: return "Shipped";
+      case 3: return "Delivered";
+      default: return "Unknown";
+    }
+  };
+
+  const getPaymentStatusLabel = (status: number) => {
+    switch (status) {
+      case -1: return "Refunded";
+      case 1: return "Pending";
+      case 2: return "Confirmed";
+      default: return "Unknown";
+    }
+  };
 
 
   const handleViewDetails = (row: Order) => {

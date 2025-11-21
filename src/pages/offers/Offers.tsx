@@ -23,104 +23,7 @@ const Offers: React.FC = () => {
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
   const { currentParams, handleParamsChange } = useGridSettings('offers', 10);
 
-  // API hooks
-  const apiParams = {
-    page: currentParams.page + 1,
-    limit: currentParams.pageSize,
-    filters: currentParams.filterModel.items.reduce((acc: any, item) => {
-      acc[item.field] = item.value;
-      return acc;
-    }, {}),
-    sortBy: currentParams.sortModel[0]?.field,
-    sortOrder:
-      currentParams.sortModel[0]?.sort === "asc"
-        ? ("asc" as const)
-        : currentParams.sortModel[0]?.sort === "desc"
-        ? ("desc" as const)
-        : undefined,
-  };
-
-  const { data: offersData, isLoading } = useOffersApi(apiParams);
-  const {
-    mutate: createOffer,
-    isSuccess: createOfferSuccess,
-    isError: createOfferError,
-    isPending: createOfferPending,
-    error: createOfferErrorMessage,
-  } = useCreateOfferApi();
-  const {
-    mutate: updateOffer,
-    isSuccess: updateOfferSuccess,
-    isError: updateOfferError,
-    isPending: updateOfferPending,
-    error: updateOfferErrorMessage,
-  } = useUpdateOfferApi();
-  const {
-    mutate: deleteOffer,
-    isSuccess: deleteOfferSuccess,
-    isError: deleteOfferError,
-    isPending: deleteOfferPending,
-    error: deleteOfferErrorMessage,
-  } = useDeleteOfferApi();
-
-  // Update grid data when API data changes
-  useEffect(() => {
-    if (offersData) {
-      setGridData({
-        rows: offersData.docs || [],
-        totalCount: offersData.totalCount || 0,
-      });
-    }
-  }, [offersData]);
-
-  useEffect(() => {
-    if (createOfferSuccess) {
-      toast.success("Offer created successfully");
-      setModalOpen(false);
-    }
-    if (createOfferError) {
-      toast.error("Failed to create offer");
-    }
-  }, [createOfferSuccess, createOfferError]);
-
-  useEffect(() => {
-    if (updateOfferSuccess) {
-      toast.success("Offer updated successfully");
-      setModalOpen(false);
-    }
-    if (updateOfferError) {
-      toast.error("Failed to update offer");
-    }
-  }, [updateOfferSuccess, updateOfferError]);
-
-  useEffect(() => {
-    if (deleteOfferSuccess) {
-      toast.success("Offer deleted successfully");
-    }
-    if (deleteOfferError) {
-      toast.error("Failed to delete offer");
-    }
-  }, [deleteOfferSuccess, deleteOfferError]);
-
-  const getDiscountLabel = (offer: Offer) => {
-    if (offer.discountType === 'percentage') {
-      return `${offer.value}% OFF`;
-    } else if (offer.discountType === 'amount') {
-      return `₹${offer.value} OFF`;
-    }
-    return "No Discount";
-  };
-
-  const getDiscountColor = (offer: Offer) => {
-    if (offer.discountType === 'percentage') {
-      return offer.value && offer.value >= 50 ? "error" : "warning";
-    } else if (offer.discountType === 'amount') {
-      return offer.value && offer.value >= 1000 ? "error" : "warning";
-    }
-    return "default";
-  };
-
-  const columns: DynamicColumn[] = [
+    const columns: DynamicColumn[] = [
     {
       field: "offerName",
       headerName: "Offer Name",
@@ -253,6 +156,107 @@ const Offers: React.FC = () => {
       ),
     },
   ];
+
+  // API hooks
+  const apiParams = {
+    page: currentParams.page + 1,
+    limit: currentParams.pageSize,
+    filters: currentParams.filterModel.items.map((item) => {
+      return {
+        field: item.field,
+        operator: item.operator,
+        type: columns.filter((i) => i.field === item.field)[0]?.type,
+        value: item.value,
+      };
+    }),
+    sortBy: currentParams.sortModel[0]?.field,
+    sortOrder:
+      currentParams.sortModel[0]?.sort === "asc"
+        ? ("asc" as const)
+        : currentParams.sortModel[0]?.sort === "desc"
+        ? ("desc" as const)
+        : undefined,
+  };
+
+  const { data: offersData, isLoading } = useOffersApi(apiParams);
+  const {
+    mutate: createOffer,
+    isSuccess: createOfferSuccess,
+    isError: createOfferError,
+    isPending: createOfferPending,
+    error: createOfferErrorMessage,
+  } = useCreateOfferApi();
+  const {
+    mutate: updateOffer,
+    isSuccess: updateOfferSuccess,
+    isError: updateOfferError,
+    isPending: updateOfferPending,
+    error: updateOfferErrorMessage,
+  } = useUpdateOfferApi();
+  const {
+    mutate: deleteOffer,
+    isSuccess: deleteOfferSuccess,
+    isError: deleteOfferError,
+    isPending: deleteOfferPending,
+    error: deleteOfferErrorMessage,
+  } = useDeleteOfferApi();
+
+  // Update grid data when API data changes
+  useEffect(() => {
+    if (offersData) {
+      setGridData({
+        rows: offersData.docs || [],
+        totalCount: offersData.totalCount || 0,
+      });
+    }
+  }, [offersData]);
+
+  useEffect(() => {
+    if (createOfferSuccess) {
+      toast.success("Offer created successfully");
+      setModalOpen(false);
+    }
+    if (createOfferError) {
+      toast.error("Failed to create offer");
+    }
+  }, [createOfferSuccess, createOfferError]);
+
+  useEffect(() => {
+    if (updateOfferSuccess) {
+      toast.success("Offer updated successfully");
+      setModalOpen(false);
+    }
+    if (updateOfferError) {
+      toast.error("Failed to update offer");
+    }
+  }, [updateOfferSuccess, updateOfferError]);
+
+  useEffect(() => {
+    if (deleteOfferSuccess) {
+      toast.success("Offer deleted successfully");
+    }
+    if (deleteOfferError) {
+      toast.error("Failed to delete offer");
+    }
+  }, [deleteOfferSuccess, deleteOfferError]);
+
+  const getDiscountLabel = (offer: Offer) => {
+    if (offer.discountType === 'percentage') {
+      return `${offer.value}% OFF`;
+    } else if (offer.discountType === 'amount') {
+      return `₹${offer.value} OFF`;
+    }
+    return "No Discount";
+  };
+
+  const getDiscountColor = (offer: Offer) => {
+    if (offer.discountType === 'percentage') {
+      return offer.value && offer.value >= 50 ? "error" : "warning";
+    } else if (offer.discountType === 'amount') {
+      return offer.value && offer.value >= 1000 ? "error" : "warning";
+    }
+    return "default";
+  };
 
 
   const handleAdd = () => {

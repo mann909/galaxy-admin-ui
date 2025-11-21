@@ -23,86 +23,7 @@ const Categories: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { currentParams, handleParamsChange } = useGridSettings('categories', 10);
 
-  // API hooks
-  const apiParams = {
-    page: currentParams.page + 1,
-    limit: currentParams.pageSize,
-    filters: currentParams.filterModel.items.reduce((acc: any, item) => {
-      acc[item.field] = item.value;
-      return acc;
-    }, {}),
-    sortBy: currentParams.sortModel[0]?.field,
-    sortOrder:
-      currentParams.sortModel[0]?.sort === "asc"
-        ? ("asc" as const)
-        : currentParams.sortModel[0]?.sort === "desc"
-        ? ("desc" as const)
-        : undefined,
-  };
-
-  const { data: categoriesData, isLoading } = useCategoriesApi(apiParams);
-  const {
-    mutate: createCategory,
-    isSuccess: createCategorySuccess,
-    isError: createCategoryError,
-    isPending: createCategoryPending,
-    error: createCategoryErrorMessage,
-  } = useCreateCategoryApi();
-  const {
-    mutate: updateCategory,
-    isSuccess: updateCategorySuccess,
-    isError: updateCategoryError,
-    isPending: updateCategoryPending,
-    error: updateCategoryErrorMessage,
-  } = useUpdateCategoryApi();
-  const {
-    mutate: deleteCategory,
-    isSuccess: deleteCategorySuccess,
-    isError: deleteCategoryError,
-    isPending: deleteCategoryPending,
-    error: deleteCategoryErrorMessage,
-  } = useDeleteCategoryApi();
-
-  // Update grid data when API data changes
-  useEffect(() => {
-    if (categoriesData) {
-      setGridData({
-        rows: categoriesData.docs || [],
-        totalCount: categoriesData.totalCount || 0,
-      });
-    }
-  }, [categoriesData]);
-
-  useEffect(() => {
-    if (createCategorySuccess) {
-      toast.success("Category created successfully");
-      setModalOpen(false);
-    }
-    if (createCategoryError) {
-      toast.error("Failed to create category");
-    }
-  }, [createCategorySuccess, createCategoryError]);
-
-  useEffect(() => {
-    if (updateCategorySuccess) {
-      toast.success("Category updated successfully");
-      setModalOpen(false);
-    }
-    if (updateCategoryError) {
-      toast.error("Failed to update category");
-    }
-  }, [updateCategorySuccess, updateCategoryError]);
-
-  useEffect(() => {
-    if (deleteCategorySuccess) {
-      toast.success("Category deleted successfully");
-    }
-    if (deleteCategoryError) {
-      toast.error("Failed to delete category");
-    }
-  }, [deleteCategorySuccess, deleteCategoryError]);
-
-  const columns: DynamicColumn[] = [
+    const columns: DynamicColumn[] = [
     {
       field: "name",
       headerName: "Category Name",
@@ -235,6 +156,89 @@ const Categories: React.FC = () => {
       ),
     },
   ];
+
+  // API hooks
+  const apiParams = {
+    page: currentParams.page + 1,
+    limit: currentParams.pageSize,
+    filters: currentParams.filterModel.items.map((item) => {
+      return {
+        field: item.field,
+        operator: item.operator,
+        type: columns.filter((i) => i.field === item.field)[0]?.type,
+        value: item.value,
+      };
+    }),
+    sortBy: currentParams.sortModel[0]?.field,
+    sortOrder:
+      currentParams.sortModel[0]?.sort === "asc"
+        ? ("asc" as const)
+        : currentParams.sortModel[0]?.sort === "desc"
+        ? ("desc" as const)
+        : undefined,
+  };
+
+  const { data: categoriesData, isLoading } = useCategoriesApi(apiParams);
+  const {
+    mutate: createCategory,
+    isSuccess: createCategorySuccess,
+    isError: createCategoryError,
+    isPending: createCategoryPending,
+    error: createCategoryErrorMessage,
+  } = useCreateCategoryApi();
+  const {
+    mutate: updateCategory,
+    isSuccess: updateCategorySuccess,
+    isError: updateCategoryError,
+    isPending: updateCategoryPending,
+    error: updateCategoryErrorMessage,
+  } = useUpdateCategoryApi();
+  const {
+    mutate: deleteCategory,
+    isSuccess: deleteCategorySuccess,
+    isError: deleteCategoryError,
+    isPending: deleteCategoryPending,
+    error: deleteCategoryErrorMessage,
+  } = useDeleteCategoryApi();
+
+  // Update grid data when API data changes
+  useEffect(() => {
+    if (categoriesData) {
+      setGridData({
+        rows: categoriesData.docs || [],
+        totalCount: categoriesData.totalCount || 0,
+      });
+    }
+  }, [categoriesData]);
+
+  useEffect(() => {
+    if (createCategorySuccess) {
+      toast.success("Category created successfully");
+      setModalOpen(false);
+    }
+    if (createCategoryError) {
+      toast.error("Failed to create category");
+    }
+  }, [createCategorySuccess, createCategoryError]);
+
+  useEffect(() => {
+    if (updateCategorySuccess) {
+      toast.success("Category updated successfully");
+      setModalOpen(false);
+    }
+    if (updateCategoryError) {
+      toast.error("Failed to update category");
+    }
+  }, [updateCategorySuccess, updateCategoryError]);
+
+  useEffect(() => {
+    if (deleteCategorySuccess) {
+      toast.success("Category deleted successfully");
+    }
+    if (deleteCategoryError) {
+      toast.error("Failed to delete category");
+    }
+  }, [deleteCategorySuccess, deleteCategoryError]);
 
 
   const handleAdd = () => {

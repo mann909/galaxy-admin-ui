@@ -1,124 +1,106 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box } from '@mui/material';
-import DefaultLayout from '../../layout/DefaultLayout';
-import DynamicDataGrid, { DynamicColumn, GridData, GridParams } from '../../components/data-grid/DynamicDataGrid';
-import { useGridSettings } from '../../hooks/useGridSettings';
-import DynamicFormModal, { FormField } from '../../modals/DynamicFormModal';
-import toast from 'react-hot-toast';
-
-// Mock data
-const generateMockUsers = (page: number, pageSize: number, sortField?: string, sortDirection?: string, searchTerm?: string) => {
-  const allUsers = Array.from({ length: 150 }, (_, i) => ({
-    id: i + 1,
-    name: `User ${i + 1}`,
-    email: `user${i + 1}@example.com`,
-    role: ['Admin', 'User', 'Manager'][i % 3],
-    status: ['Active', 'Inactive'][i % 2],
-    createdAt: new Date(2024, 0, i + 1).toISOString().split('T')[0],
-    lastLogin: new Date(2024, 5, (i % 30) + 1).toISOString().split('T')[0],
-  }));
-
-  let filteredUsers = allUsers;
-  
-  // Apply search filter
-  if (searchTerm) {
-    filteredUsers = allUsers.filter(user => 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
-
-  // Apply sorting
-  if (sortField && sortDirection) {
-    filteredUsers.sort((a, b) => {
-      const aVal = a[sortField as keyof typeof a];
-      const bVal = b[sortField as keyof typeof b];
-      
-      if (sortDirection === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-  }
-
-  // Apply pagination
-  const startIndex = page * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-
-  return {
-    rows: paginatedUsers,
-    totalCount: filteredUsers.length,
-  };
-};
+import React, { useState, useEffect, useCallback } from "react";
+import { Box } from "@mui/material";
+import DefaultLayout from "../../layout/DefaultLayout";
+import DynamicDataGrid, {
+  DynamicColumn,
+  GridData,
+  GridParams,
+} from "../../components/data-grid/DynamicDataGrid";
+import { useGridSettings } from "../../hooks/useGridSettings";
+import { useUsersApi } from "../../api/api-hooks/useUserApi";
+// import DynamicFormModal, { FormField } from '../../modals/DynamicFormModal';
+// import toast from 'react-hot-toast';
 
 const Users: React.FC = () => {
   const [gridData, setGridData] = useState<GridData>({ rows: [], totalCount: 0 });
   const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  // const [modalOpen, setModalOpen] = useState(false);
+  // const [editingUser, setEditingUser] = useState<any>(null);
 
   // Define columns for the users table
   const columns: DynamicColumn[] = [
-    { 
-      field: 'id', 
-      headerName: 'ID', 
+    {
+      field: "_id",
+      headerName: "ID",
       flex: 0.5,
-      type: 'number',
+      type: "number",
     },
-    { 
-      field: 'name', 
-      headerName: 'Name', 
+    {
+      field: "fullName",
+      headerName: "Name",
       flex: 1.5,
-      type: 'string',
+      type: "string",
     },
-    { 
-      field: 'email', 
-      headerName: 'Email', 
+    {
+      field: "email",
+      headerName: "Email",
       flex: 2,
-      type: 'string',
+      type: "string",
     },
-    { 
-      field: 'role', 
-      headerName: 'Role', 
-      flex: 1,
-      type: 'string',
+    {
+      field: "phoneNumber",
+      headerName: "Phone",
+      flex: 2,
+      type: "string",
     },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
+    {
+      field: "role",
+      headerName: "Role",
       flex: 1,
-      type: 'string',
+      type: "string",
+    },
+    {
+      field: "isActive",
+      headerName: "is Active?",
+      flex: 1,
+      type: "string",
       renderCell: (params) => (
         <Box
           sx={{
             borderRadius: 1,
-            // backgroundColor: params.value === 'Active' ? '#e8f5e8' : '#ffeaa7',
-            color: params.value === 'Active' ? '#2e7d32' : '#f57f17',
-            fontWeight: 'bold',
-            fontSize: '0.75rem',
+            // backgroundColor: params.value ? '#e8f5e8' : '#ffeaa7',
+            color: params.value ? "#2e7d32" : "#f57f17",
+            fontWeight: "bold",
+            fontSize: "0.75rem",
           }}
         >
-          {params.value}
+          {params.value ? "Active" : "Inactive"}
         </Box>
       ),
     },
-    { 
-      field: 'createdAt', 
-      headerName: 'Created At', 
+    {
+      field: "isVerified",
+      headerName: "is Verified?",
       flex: 1,
-      type: 'date',
-      valueFormatter: (value) => new Date(value).toLocaleDateString(),  
+      type: "string",
+      renderCell: (params) => (
+        <Box
+          sx={{
+            borderRadius: 1,
+            // backgroundColor: params.value ? '#e8f5e8' : '#ffeaa7',
+            color: params.value ? "#2e7d32" : "#f57f17",
+            fontWeight: "bold",
+            fontSize: "0.75rem",
+          }}
+        >
+          {params.value ? "Verified" : "Unverified"}
+        </Box>
+      ),
     },
-    // { 
-    //   field: 'lastLogin', 
-    //   headerName: 'Last Login', 
-    //   flex: 1,
-    //   type: 'date',
-    //   valueFormatter: (value) => new Date(value).toLocaleDateString(),  
-    // },
+    {
+      field: "createdAt",
+      headerName: "Created At",
+      flex: 1,
+      type: "date",
+      valueFormatter: (value) => new Date(value).toLocaleDateString(),
+    },
+    {
+      field: "lastLogin",
+      headerName: "Last Login",
+      flex: 1,
+      type: "date",
+      valueFormatter: (value) => new Date(value).toLocaleDateString(),
+    },
   ];
 
   // Define form fields for add/edit modal
@@ -163,68 +145,101 @@ const Users: React.FC = () => {
   // ];
 
   // Load data based on current parameters
-  const loadData = useCallback(async (params: GridParams) => {
-    setLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const sortField = params.sortModel[0]?.field;
-    const sortDirection = params.sortModel[0]?.sort ?? undefined;
-    const searchTerm = params.quickFilterValue;
-    
-    const data = generateMockUsers(
-      params.page, 
-      params.pageSize, 
-      sortField, 
-      sortDirection, 
-      searchTerm
-    );
-    
-    setGridData(data);
-    setLoading(false);
-  }, []);
+  // const loadData = useCallback(async (params: GridParams) => {
+  //   setLoading(true);
+
+  //   // Simulate API delay
+  //   // await new Promise(resolve => setTimeout(resolve, 500));
+
+  //   const sortField = params.sortModel[0]?.field;
+  //   const sortDirection = params.sortModel[0]?.sort ?? undefined;
+  //   const searchTerm = params.quickFilterValue;
+
+  //   // const data = generateMockUsers(
+  //   //   params.page,
+  //   //   params.pageSize,
+  //   //   sortField,
+  //   //   sortDirection,
+  //   //   searchTerm
+  //   // );
+
+  //   setGridData(data);
+  //   setLoading(false);
+  // }, []);
 
   // Load initial data
+  // useEffect(() => {
+  //   loadData(currentParams);
+  // }, []);
+
+  const { currentParams, handleParamsChange } = useGridSettings("users", 10);
+
+  // API hooks
+  const apiParams = {
+    page: currentParams.page + 1,
+    limit: currentParams.pageSize,
+    filters: currentParams.filterModel.items.map((item) => {
+      return {
+        field: item.field,
+        operator: item.operator,
+        type: columns.filter((i) => i.field === item.field)[0]?.type,
+        value: item.value,
+      };
+    }),
+    // filters:{
+    //   field:
+    // },
+    sortBy: currentParams.sortModel[0]?.field,
+    sortOrder:
+      currentParams.sortModel[0]?.sort === "asc"
+        ? ("asc" as const)
+        : currentParams.sortModel[0]?.sort === "desc"
+        ? ("desc" as const)
+        : undefined,
+  };
+
+  const { data: usersData, isLoading } = useUsersApi(apiParams);
+
   useEffect(() => {
-    loadData(currentParams);
-  }, []);
-
-    const { currentParams, handleParamsChange } = useGridSettings('users', 10, loadData);
-
-
-
-  const handleAdd = () => {
-    setEditingUser(null);
-    setModalOpen(true);
-  };
-
-  const handleEdit = (row: any) => {
-    setEditingUser(row);
-    setModalOpen(true);
-  };
-
-  const handleDelete = async (id: string | number) => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      toast.success(`User ${id} deleted successfully`);
-      // Reload data after delete
-      loadData(currentParams);
+    if (usersData) {
+      setGridData({
+        rows: usersData.docs || [],
+        totalCount: usersData.totalCount || 0,
+      });
     }
-  };
+  }, [usersData]);
 
-  const handleFormSubmit = async () => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (editingUser) {
-      toast.success('User updated successfully');
-    } else {
-      toast.success('User created successfully');
-    }
-    
-    // Reload data after submit
-    loadData(currentParams);
-  };
+  // const handleAdd = () => {
+  //   setEditingUser(null);
+  //   setModalOpen(true);
+  // };
+
+  // const handleEdit = (row: any) => {
+  //   setEditingUser(row);
+  //   setModalOpen(true);
+  // };
+
+  // const handleDelete = async (id: string | number) => {
+  //   if (confirm('Are you sure you want to delete this user?')) {
+  //     toast.success(`User ${id} deleted successfully`);
+  //     // Reload data after delete
+  //     loadData(currentParams);
+  //   }
+  // };
+
+  // const handleFormSubmit = async () => {
+  //   // Simulate API call
+  //   await new Promise(resolve => setTimeout(resolve, 1000));
+
+  //   if (editingUser) {
+  //     toast.success('User updated successfully');
+  //   } else {
+  //     toast.success('User created successfully');
+  //   }
+
+  //   // Reload data after submit
+  //   loadData(currentParams);
+  // };
 
   return (
     <DefaultLayout>

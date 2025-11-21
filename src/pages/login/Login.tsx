@@ -53,7 +53,7 @@ const Login: React.FC = () => {
                 <Lock size={24} />
               </Avatar>
               <Typography component="h1" variant="h4" sx={{ mt: 1 }}>
-                Galaxy Admin
+                Luggaelegacy Admin
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Sign in to your account

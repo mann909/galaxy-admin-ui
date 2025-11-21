@@ -12,7 +12,7 @@ import { useVerifyTokensApi } from "./api/api-hooks/useAuthApi";
 import { resetAuthState, setIsLoggedIn, setUser } from "./store/userSlice";
 import Login from "./pages/login/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
-// import Users from "./pages/Users/Users";
+import Users from "./pages/Users/Users";
 import Products from "./pages/products/Products";
 import Banners from "./pages/banners/Banners";
 import Categories from "./pages/categories/Categories";
@@ -42,7 +42,7 @@ const publicRoutes: Route[] = [
 
 const privateRoutes: Route[] = [
   { path: "/", element: <Dashboard /> },
-  // { path: "/users", element: <Users /> },
+  { path: "/users", element: <Users /> },
   { path: "/products", element: <Products /> },
   { path: "/banners", element: <Banners /> },
   { path: "/categories", element: <Categories /> },

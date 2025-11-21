@@ -23,86 +23,7 @@ const Banners: React.FC = () => {
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const { currentParams, handleParamsChange } = useGridSettings('banners', 10);
 
-  // API hooks
-  const apiParams = {
-    page: currentParams.page + 1,
-    limit: currentParams.pageSize,
-    filters: currentParams.filterModel.items.reduce((acc: any, item) => {
-      acc[item.field] = item.value;
-      return acc;
-    }, {}),
-    sortBy: currentParams.sortModel[0]?.field,
-    sortOrder:
-      currentParams.sortModel[0]?.sort === "asc"
-        ? ("asc" as const)
-        : currentParams.sortModel[0]?.sort === "desc"
-        ? ("desc" as const)
-        : undefined,
-  };
-
-  const { data: bannersData, isLoading } = useBannersApi(apiParams);
-  const {
-    mutate: createBanner,
-    isSuccess: createBannerSuccess,
-    isError: createBannerError,
-    isPending: createBannerPending,
-    error: createBannerErrorMessage,
-  } = useCreateBannerApi();
-  const {
-    mutate: updateBanner,
-    isSuccess: updateBannerSuccess,
-    isError: updateBannerError,
-    isPending: updateBannerPending,
-    error: updateBannerErrorMessage,
-  } = useUpdateBannerApi();
-  const {
-    mutate: deleteBanner,
-    isSuccess: deleteBannerSuccess,
-    isError: deleteBannerError,
-    isPending: deleteBannerPending,
-    error: deleteBannerErrorMessage,
-  } = useDeleteBannerApi();
-
-  // Update grid data when API data changes
-  useEffect(() => {
-    if (bannersData) {
-      setGridData({
-        rows: bannersData.docs || [],
-        totalCount: bannersData.totalCount || 0,
-      });
-    }
-  }, [bannersData]);
-
-  useEffect(() => {
-    if (createBannerSuccess) {
-      toast.success("Banner created successfully");
-      setModalOpen(false);
-    }
-    if (createBannerError) {
-      toast.error("Failed to create banner");
-    }
-  }, [createBannerSuccess, createBannerError]);
-
-  useEffect(() => {
-    if (updateBannerSuccess) {
-      toast.success("Banner updated successfully");
-      setModalOpen(false);
-    }
-    if (updateBannerError) {
-      toast.error("Failed to update banner");
-    }
-  }, [updateBannerSuccess, updateBannerError]);
-
-  useEffect(() => {
-    if (deleteBannerSuccess) {
-      toast.success("Banner deleted successfully");
-    }
-    if (deleteBannerError) {
-      toast.error("Failed to delete banner");
-    }
-  }, [deleteBannerSuccess, deleteBannerError]);
-
-  const columns: DynamicColumn[] = [
+    const columns: DynamicColumn[] = [
     {
       field: "bannerImages",
       headerName: "Images",
@@ -173,6 +94,88 @@ const Banners: React.FC = () => {
     },
   ];
 
+  // API hooks
+  const apiParams = {
+    page: currentParams.page + 1,
+    limit: currentParams.pageSize,
+    filters: currentParams.filterModel.items.map((item) => {
+      return {
+        field: item.field,
+        operator: item.operator,
+        type: columns.filter((i) => i.field === item.field)[0]?.type,
+        value: item.value,
+      };
+    }),
+    sortBy: currentParams.sortModel[0]?.field,
+    sortOrder:
+      currentParams.sortModel[0]?.sort === "asc"
+        ? ("asc" as const)
+        : currentParams.sortModel[0]?.sort === "desc"
+        ? ("desc" as const)
+        : undefined,
+  };
+
+  const { data: bannersData, isLoading } = useBannersApi(apiParams);
+  const {
+    mutate: createBanner,
+    isSuccess: createBannerSuccess,
+    isError: createBannerError,
+    isPending: createBannerPending,
+    error: createBannerErrorMessage,
+  } = useCreateBannerApi();
+  const {
+    mutate: updateBanner,
+    isSuccess: updateBannerSuccess,
+    isError: updateBannerError,
+    isPending: updateBannerPending,
+    error: updateBannerErrorMessage,
+  } = useUpdateBannerApi();
+  const {
+    mutate: deleteBanner,
+    isSuccess: deleteBannerSuccess,
+    isError: deleteBannerError,
+    isPending: deleteBannerPending,
+    error: deleteBannerErrorMessage,
+  } = useDeleteBannerApi();
+
+  // Update grid data when API data changes
+  useEffect(() => {
+    if (bannersData) {
+      setGridData({
+        rows: bannersData.docs || [],
+        totalCount: bannersData.totalCount || 0,
+      });
+    }
+  }, [bannersData]);
+
+  useEffect(() => {
+    if (createBannerSuccess) {
+      toast.success("Banner created successfully");
+      setModalOpen(false);
+    }
+    if (createBannerError) {
+      toast.error("Failed to create banner");
+    }
+  }, [createBannerSuccess, createBannerError]);
+
+  useEffect(() => {
+    if (updateBannerSuccess) {
+      toast.success("Banner updated successfully");
+      setModalOpen(false);
+    }
+    if (updateBannerError) {
+      toast.error("Failed to update banner");
+    }
+  }, [updateBannerSuccess, updateBannerError]);
+
+  useEffect(() => {
+    if (deleteBannerSuccess) {
+      toast.success("Banner deleted successfully");
+    }
+    if (deleteBannerError) {
+      toast.error("Failed to delete banner");
+    }
+  }, [deleteBannerSuccess, deleteBannerError]);
 
   const handleAdd = () => {
     setEditingBanner(null);

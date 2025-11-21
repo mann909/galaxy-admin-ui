@@ -1,15 +1,5 @@
-/**
- * API paths for various CRUD operations
- */
-interface SubEndPoints {
-    [key: string]: string;
-}
 
-interface ApiPaths {
-    [key: string]: SubEndPoints;
-}
-
-export const apiPaths: ApiPaths = {
+export const apiPaths = {
     auth:{
         login:"auth/login",
         verifyTokens: "auth/verify-tokens",
@@ -35,5 +25,8 @@ export const apiPaths: ApiPaths = {
     },
     dashboard:{
         stats:"dashboard/stats",
+    },
+    user:{
+        all:"user",
     }
-};
+} as const;

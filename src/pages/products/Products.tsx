@@ -24,89 +24,7 @@ const Products: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { currentParams, handleParamsChange } = useGridSettings('products', 10);
 
-  // API hooks
-  const apiParams = {
-    page: currentParams.page + 1,
-    limit: currentParams.pageSize,
-    filters: currentParams.filterModel.items.reduce((acc: any, item) => {
-      acc[item.field] = item.value;
-      return acc;
-    }, {}),
-    sortBy: currentParams.sortModel[0]?.field,
-    sortOrder:
-      currentParams.sortModel[0]?.sort === "asc"
-        ? ("asc" as const)
-        : currentParams.sortModel[0]?.sort === "desc"
-        ? ("desc" as const)
-        : undefined,
-  };
-
-  const { data: productsData, isLoading } = useProductsApi(apiParams);
-  const {
-    mutate: createProduct,
-    isSuccess: createProductSuccess,
-    isError: createProductError,
-    isPending: createProductPending,
-    error: createProductErrorMessage,
-  } = useCreateProductApi();
-  const {
-    mutate: updateProduct,
-    isSuccess: updateProductSuccess,
-    isError: updateProductError,
-    isPending: updateProductPending,
-    error: updateProductErrorMessage,
-  } = useUpdateProductApi();
-  const {
-    mutate: deleteProduct,
-    isSuccess: deleteProductSuccess,
-    isError: deleteProductError,
-    isPending: deleteProductPending,
-    error: deleteProductErrorMessage,
-  } = useDeleteProductApi();
-
-  // Update grid data when API data changes
-  useEffect(() => {
-    if (productsData) {
-      setGridData({
-        rows: productsData.docs || [],
-        totalCount: productsData.totalCount || 0,
-      });
-    }
-  }, [productsData]);
-
-  useEffect(() => {
-    if (createProductSuccess) {
-      toast.success("Product created successfully");
-      setModalOpen(false);
-    }
-    if (createProductError) {
-      toast.error("Failed to create product");
-    }
-  }, [createProductSuccess, createProductError]);
-
-  useEffect(() => {
-    console.log(updateProductSuccess, updateProductError);
-    if (updateProductSuccess) {
-      toast.success("Product updated successfully");
-      setModalOpen(false);
-    }
-    if (updateProductError) {
-      toast.error("Failed to update product");
-    }
-  }, [updateProductSuccess, updateProductError]);
-
-  useEffect(() => {
-    if (deleteProductSuccess) {
-      toast.success("Product deleted successfully");
-    }
-    if (deleteProductError) {
-      toast.error("Failed to delete product");
-    }
-  }, [deleteProductSuccess, deleteProductError]);
-
-  const { data: categoriesData } = useCategoriesApi({ limit: 1000 });
-
-  const columns: DynamicColumn[] = [
+    const columns: DynamicColumn[] = [
     // {
     //   field: '_id',
     //   headerName: 'ID',
@@ -580,6 +498,91 @@ const Products: React.FC = () => {
     },
   ];
 
+  // API hooks
+  const apiParams = {
+    page: currentParams.page + 1,
+    limit: currentParams.pageSize,
+    filters: currentParams.filterModel.items.map((item) => {
+      return {
+        field: item.field,
+        operator: item.operator,
+        type: columns.filter((i) => i.field === item.field)[0]?.type,
+        value: item.value,
+      };
+    }),
+    sortBy: currentParams.sortModel[0]?.field,
+    sortOrder:
+      currentParams.sortModel[0]?.sort === "asc"
+        ? ("asc" as const)
+        : currentParams.sortModel[0]?.sort === "desc"
+        ? ("desc" as const)
+        : undefined,
+  };
+
+  const { data: productsData, isLoading } = useProductsApi(apiParams);
+  const {
+    mutate: createProduct,
+    isSuccess: createProductSuccess,
+    isError: createProductError,
+    isPending: createProductPending,
+    error: createProductErrorMessage,
+  } = useCreateProductApi();
+  const {
+    mutate: updateProduct,
+    isSuccess: updateProductSuccess,
+    isError: updateProductError,
+    isPending: updateProductPending,
+    error: updateProductErrorMessage,
+  } = useUpdateProductApi();
+  const {
+    mutate: deleteProduct,
+    isSuccess: deleteProductSuccess,
+    isError: deleteProductError,
+    isPending: deleteProductPending,
+    error: deleteProductErrorMessage,
+  } = useDeleteProductApi();
+
+  // Update grid data when API data changes
+  useEffect(() => {
+    if (productsData) {
+      setGridData({
+        rows: productsData.docs || [],
+        totalCount: productsData.totalCount || 0,
+      });
+    }
+  }, [productsData]);
+
+  useEffect(() => {
+    if (createProductSuccess) {
+      toast.success("Product created successfully");
+      setModalOpen(false);
+    }
+    if (createProductError) {
+      toast.error("Failed to create product");
+    }
+  }, [createProductSuccess, createProductError]);
+
+  useEffect(() => {
+    console.log(updateProductSuccess, updateProductError);
+    if (updateProductSuccess) {
+      toast.success("Product updated successfully");
+      setModalOpen(false);
+    }
+    if (updateProductError) {
+      toast.error("Failed to update product");
+    }
+  }, [updateProductSuccess, updateProductError]);
+
+  useEffect(() => {
+    if (deleteProductSuccess) {
+      toast.success("Product deleted successfully");
+    }
+    if (deleteProductError) {
+      toast.error("Failed to delete product");
+    }
+  }, [deleteProductSuccess, deleteProductError]);
+
+  const { data: categoriesData } = useCategoriesApi({ limit: 1000 });
 
   const handleAdd = () => {
     setEditingProduct(null);

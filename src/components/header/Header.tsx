@@ -45,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </IconButton>
         
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          Galaxy Admin
+          Luggaelegacy Admin
         </Typography>
         
         <Box>
